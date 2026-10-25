@@ -4,25 +4,25 @@
 
 ## Сборка и запуск
 
-Проект использует менеджер пакетов Conan 2 и мета-систему сборки CMake. Все команды выполняются из каталога проекта (`project/`):
+Проект использует менеджер пакетов Conan 2 и мета-систему сборки CMake. Все команды выполняются из каталога проекта (`project/`). Профили и флаги лежат в `automation/common.py`.
 
 ```powershell
-# 1. Установка зависимостей через Conan под Debug и Release
-conan install . --output-folder=build -pr:h profiles/windows-msvc-debug -pr:b profiles/windows-msvc-debug --build=missing
-conan install . --output-folder=build -pr:h profiles/windows-msvc-release -pr:b profiles/windows-msvc-release --build=missing
+python automation/generate_project_files.py
+python automation/build_debug.py
+python automation/build_release.py
+python automation/clean.py
 
-# 2. Конфигурирование с тулчейном Conan
-cmake -S . -B build "-DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake"
-
-# 3. Сборка проекта
-cmake --build build --config Debug
-
-# 4. Запуск приложения (файл config.json читается из текущего каталога)
+# Запуск приложения (файл config.json читается из текущего каталога)
 .\build\Debug\app.exe
 ```
-# «Стиль кода»:
+
+## Стиль кода
 
 стиль зафиксирован в .clang-format (на базе Microsoft);
-исправление: cmake --build build --target format;
-проверка: cmake --build build --target format-check;
+
+```powershell
+python automation/format_files.py
+python automation/format_files.py --check
+```
+
 рекомендация включить автоформатирование при сохранении в IDE.
