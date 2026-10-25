@@ -20,3 +20,9 @@ cmake --build build --config Debug
 # 4. Запуск приложения (файл config.json читается из текущего каталога)
 .\build\Debug\app.exe
 ```
+# «Стиль кода»:
+
+стиль зафиксирован в .clang-format (на базе Microsoft);
+исправление: cmake --build build --target format;
+проверка: cmake --build build --target format-check;
+рекомендация включить автоформатирование при сохранении в IDE.
