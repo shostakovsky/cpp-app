@@ -44,7 +44,7 @@ cd ..\from-ci
 
 ```powershell
 python automation/format_files.py
-python automation/format_files.py --check!!!!
+python automation/format_files.py --check
 ```
 
 рекомендация включить автоформатирование при сохранении в IDE.
