@@ -2,11 +2,11 @@
 
 ![build](https://github.com/shostakovsky/cpp-app/actions/workflows/build.yml/badge.svg)
 
-Учебный проект курса по инженерному C++: консольное приложение App.
+╨ú╤ç╨╡╨▒╨╜╤ï╨╣ ╨┐╤Ç╨╛╨╡╨║╤é ╨║╤â╤Ç╤ü╨░ ╨┐╨╛ ╨╕╨╜╨╢╨╡╨╜╨╡╤Ç╨╜╨╛╨╝╤â C++: ╨║╨╛╨╜╤ü╨╛╨╗╤î╨╜╨╛╨╡ ╨┐╤Ç╨╕╨╗╨╛╨╢╨╡╨╜╨╕╨╡ App.
 
-## Сборка и запуск
+## ╨í╨▒╨╛╤Ç╨║╨░ ╨╕ ╨╖╨░╨┐╤â╤ü╨║
 
-Проект использует менеджер пакетов Conan 2 и мета-систему сборки CMake. Все команды выполняются из каталога проекта (`project/`). Профили и флаги лежат в `automation/common.py`.
+╨ƒ╤Ç╨╛╨╡╨║╤é ╨╕╤ü╨┐╨╛╨╗╤î╨╖╤â╨╡╤é ╨╝╨╡╨╜╨╡╨┤╨╢╨╡╤Ç ╨┐╨░╨║╨╡╤é╨╛╨▓ Conan 2 ╨╕ ╨╝╨╡╤é╨░-╤ü╨╕╤ü╤é╨╡╨╝╤â ╤ü╨▒╨╛╤Ç╨║╨╕ CMake. ╨Æ╤ü╨╡ ╨║╨╛╨╝╨░╨╜╨┤╤ï ╨▓╤ï╨┐╨╛╨╗╨╜╤Å╤Ä╤é╤ü╤Å ╨╕╨╖ ╨║╨░╤é╨░╨╗╨╛╨│╨░ ╨┐╤Ç╨╛╨╡╨║╤é╨░ (`project/`). ╨ƒ╤Ç╨╛╤ä╨╕╨╗╨╕ ╨╕ ╤ä╨╗╨░╨│╨╕ ╨╗╨╡╨╢╨░╤é ╨▓ `automation/common.py`.
 
 ```powershell
 python automation/generate_project_files.py
@@ -14,21 +14,21 @@ python automation/build_debug.py
 python automation/build_release.py
 python automation/clean.py
 
-# Запуск приложения (файл config.json читается из текущего каталога)
+# ╨ù╨░╨┐╤â╤ü╨║ ╨┐╤Ç╨╕╨╗╨╛╨╢╨╡╨╜╨╕╤Å (╤ä╨░╨╣╨╗ config.json ╤ç╨╕╤é╨░╨╡╤é╤ü╤Å ╨╕╨╖ ╤é╨╡╨║╤â╤ë╨╡╨│╨╛ ╨║╨░╤é╨░╨╗╨╛╨│╨░)
 .\build\Debug\app.exe
 ```
 
-## Непрерывная интеграция (CI)
+## ╨¥╨╡╨┐╤Ç╨╡╤Ç╤ï╨▓╨╜╨░╤Å ╨╕╨╜╤é╨╡╨│╤Ç╨░╤å╨╕╤Å (CI)
 
-Сборка автоматизирована через GitHub Actions на виртуальных машинах `windows-latest` (workflow `.github/workflows/build.yml`).
+╨í╨▒╨╛╤Ç╨║╨░ ╨░╨▓╤é╨╛╨╝╨░╤é╨╕╨╖╨╕╤Ç╨╛╨▓╨░╨╜╨░ ╤ç╨╡╤Ç╨╡╨╖ GitHub Actions ╨╜╨░ ╨▓╨╕╤Ç╤é╤â╨░╨╗╤î╨╜╤ï╤à ╨╝╨░╤ê╨╕╨╜╨░╤à `windows-latest` (workflow `.github/workflows/build.yml`).
 
-На каждый `push` и pull request выполняются:
+╨¥╨░ ╨║╨░╨╢╨┤╤ï╨╣ `push` ╨╕ pull request ╨▓╤ï╨┐╨╛╨╗╨╜╤Å╤Ä╤é╤ü╤Å:
 
-- генерация зависимостей (`automation/generate_project_files.py`);
-- сборка конфигураций Debug и Release;
-- проверка стиля `clang-format` (`automation/format_files.py --check`).
+- ╨│╨╡╨╜╨╡╤Ç╨░╤å╨╕╤Å ╨╖╨░╨▓╨╕╤ü╨╕╨╝╨╛╤ü╤é╨╡╨╣ (`automation/generate_project_files.py`);
+- ╤ü╨▒╨╛╤Ç╨║╨░ ╨║╨╛╨╜╤ä╨╕╨│╤â╤Ç╨░╤å╨╕╨╣ Debug ╨╕ Release;
+- ╨┐╤Ç╨╛╨▓╨╡╤Ç╨║╨░ ╤ü╤é╨╕╨╗╤Å `clang-format` (`automation/format_files.py --check`).
 
-Готовый бинарник публикуется артефактом `app-release` (`build/Release/app.exe` и `config.json`). Его можно скачать в секции **Artifacts** на странице завершённого запуска или командой:
+╨ô╨╛╤é╨╛╨▓╤ï╨╣ ╨▒╨╕╨╜╨░╤Ç╨╜╨╕╨║ ╨┐╤â╨▒╨╗╨╕╨║╤â╨╡╤é╤ü╤Å ╨░╤Ç╤é╨╡╤ä╨░╨║╤é╨╛╨╝ `app-release` (`build/Release/app.exe` ╨╕ `config.json`). ╨ò╨│╨╛ ╨╝╨╛╨╢╨╜╨╛ ╤ü╨║╨░╤ç╨░╤é╤î ╨▓ ╤ü╨╡╨║╤å╨╕╨╕ **Artifacts** ╨╜╨░ ╤ü╤é╤Ç╨░╨╜╨╕╤å╨╡ ╨╖╨░╨▓╨╡╤Ç╤ê╤æ╨╜╨╜╨╛╨│╨╛ ╨╖╨░╨┐╤â╤ü╨║╨░ ╨╕╨╗╨╕ ╨║╨╛╨╝╨░╨╜╨┤╨╛╨╣:
 
 ```powershell
 gh run download --name app-release --dir ..\from-ci
@@ -36,18 +36,15 @@ cd ..\from-ci
 .\build\Release\app.exe
 ```
 
-Запускайте `app.exe` из корня скачанного каталога: программа читает `config.json` из текущего рабочего каталога.
+╨ù╨░╨┐╤â╤ü╨║╨░╨╣╤é╨╡ `app.exe` ╨╕╨╖ ╨║╨╛╤Ç╨╜╤Å ╤ü╨║╨░╤ç╨░╨╜╨╜╨╛╨│╨╛ ╨║╨░╤é╨░╨╗╨╛╨│╨░: ╨┐╤Ç╨╛╨│╤Ç╨░╨╝╨╝╨░ ╤ç╨╕╤é╨░╨╡╤é `config.json` ╨╕╨╖ ╤é╨╡╨║╤â╤ë╨╡╨│╨╛ ╤Ç╨░╨▒╨╛╤ç╨╡╨│╨╛ ╨║╨░╤é╨░╨╗╨╛╨│╨░.
 
-## Стиль кода
+## ╨í╤é╨╕╨╗╤î ╨║╨╛╨┤╨░
 
-стиль зафиксирован в .clang-format (на базе Microsoft);
+╤ü╤é╨╕╨╗╤î ╨╖╨░╤ä╨╕╨║╤ü╨╕╤Ç╨╛╨▓╨░╨╜ ╨▓ .clang-format (╨╜╨░ ╨▒╨░╨╖╨╡ Microsoft);
 
 ```powershell
 python automation/format_files.py
 python automation/format_files.py --check!!!!
 ```
 
-рекомендация включить автоформатирование при сохранении в IDE.
-
-<!-- CI test run for ConEmu colors -->
-<!-- CI test run 2 -->
+╤Ç╨╡╨║╨╛╨╝╨╡╨╜╨┤╨░╤å╨╕╤Å ╨▓╨║╨╗╤Ä╤ç╨╕╤é╤î ╨░╨▓╤é╨╛╤ä╨╛╤Ç╨╝╨░╤é╨╕╤Ç╨╛╨▓╨░╨╜╨╕╨╡ ╨┐╤Ç╨╕ ╤ü╨╛╤à╤Ç╨░╨╜╨╡╨╜╨╕╨╕ ╨▓ IDE.
