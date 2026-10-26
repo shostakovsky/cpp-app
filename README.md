@@ -48,3 +48,5 @@ python automation/format_files.py --check!!!!
 ```
 
 рекомендация включить автоформатирование при сохранении в IDE.
+
+<!-- CI test run for ConEmu colors -->
