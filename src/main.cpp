@@ -4,7 +4,8 @@
 #include <string>
 #include <nlohmann/json.hpp>
 
-int main(){
+int main()
+{
     std::ifstream file("config.json");
     if (!file)
     {
@@ -13,7 +14,8 @@ int main(){
         return EXIT_FAILURE;
     }
 
-    try    {
+    try
+    {
         auto json = nlohmann::json::parse(file);
         auto title = json.at("title").get<std::string>();
         auto& window = json.at("window");
