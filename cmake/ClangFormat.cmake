@@ -6,7 +6,7 @@ file(GLOB VS_LLVM_DIRS
     "C:/Program Files/Microsoft Visual Studio/*/*/VC/Tools/Llvm/bin"
     "C:/Program Files/Microsoft Visual Studio/*/*/VC/Tools/Llvm/x64/bin")
 
-find_program(CLANG_FORMAT_EXE NAMES clang-format HINTS ${VS_LLVM_DIRS})
+find_program(CLANG_FORMAT_EXE NAMES clang-format PATHS ${VS_LLVM_DIRS})
 
 if(NOT CLANG_FORMAT_EXE)
     message(WARNING "clang-format not found: targets format and format-check are unavailable")
