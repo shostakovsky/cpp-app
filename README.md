@@ -30,6 +30,16 @@ src/App/
 
 Логика выделена в статическую библиотеку `AppLib`, а исполняемый файл `App` остаётся тонкой обёрткой над ней.
 
+## Тесты
+
+Исходные файлы тестов лежат в `src/App/Tests/`. Они проверяют корректность разбора конфигурационного файла.
+
+```powershell
+python automation/run_tests.py
+# или напрямую:
+.\build\bin\Debug\AppTestRunner.exe
+```
+
 ## Непрерывная интеграция (CI)
 
 Сборка автоматизирована через GitHub Actions на виртуальных машинах `windows-latest` (workflow `.github/workflows/build.yml`).
