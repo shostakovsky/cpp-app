@@ -1,8 +1,8 @@
 #include <cstdlib>
+#include <exception>
 #include <fstream>
 #include <print>
-#include <string>
-#include <nlohmann/json.hpp>
+#include "Config.h"
 
 int main()
 {
@@ -16,13 +16,8 @@ int main()
 
     try
     {
-        auto json = nlohmann::json::parse(file);
-        auto title = json.at("title").get<std::string>();
-        auto& window = json.at("window");
-        auto width = window.at("width").get<int>();
-        auto height = window.at("height").get<int>();
-
-        std::println("Hello, {}! Window: {}x{}", title, width, height);
+        auto config = LifeExe::parseConfig(file);
+        std::println("Hello, {}! Window: {}x{}", config.title, config.width, config.height);
     }
     catch (const std::exception& e)
     {

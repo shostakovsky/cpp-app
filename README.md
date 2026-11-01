@@ -15,8 +15,20 @@ python automation/build_release.py
 python automation/clean.py
 
 # Запуск приложения (файл config.json читается из текущего каталога)
-.\build\Debug\app.exe
+.\build\bin\Debug\App.exe
 ```
+
+## Архитектура проекта
+
+```text
+src/App/
+├── CMakeLists.txt   # project(App): цели AppLib (STATIC) и App (EXECUTABLE)
+├── Config.h         # публичный контракт библиотеки
+├── Config.cpp       # реализация парсинга конфигурации
+└── main.cpp         # тонкая точка входа
+```
+
+Логика выделена в статическую библиотеку `AppLib`, а исполняемый файл `App` остаётся тонкой обёрткой над ней.
 
 ## Непрерывная интеграция (CI)
 
@@ -28,15 +40,15 @@ python automation/clean.py
 - сборка конфигураций Debug и Release;
 - проверка стиля `clang-format` (`automation/format_files.py --check`).
 
-Готовый бинарник публикуется артефактом `app-release` (`build/Release/app.exe` и `config.json`). Его можно скачать в секции **Artifacts** на странице завершённого запуска или командой:
+Готовый бинарник публикуется артефактом `app-release` (`build/bin/Release/App.exe` и `config.json`). Его можно скачать в секции **Artifacts** на странице завершённого запуска или командой:
 
 ```powershell
 gh run download --name app-release --dir ..\from-ci
 cd ..\from-ci
-.\build\Release\app.exe
+.\build\bin\Release\App.exe
 ```
 
-Запускайте `app.exe` из корня скачанного каталога: программа читает `config.json` из текущего рабочего каталога.
+Запускайте `App.exe` из корня скачанного каталога: программа читает `config.json` из текущего рабочего каталога.
 
 ## Стиль кода
 
