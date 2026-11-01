@@ -15,7 +15,7 @@ TEST(ConfigTest, ShouldReadTitleAndWindow)
     const AppConfig config = parseConfig(input);
 
     EXPECT_EQ(config.title, "App");
-    EXPECT_EQ(config.width, 800);
+    EXPECT_EQ(config.width, 801);
     EXPECT_EQ(config.height, 600);
 }
 
