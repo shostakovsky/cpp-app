@@ -40,6 +40,14 @@ python automation/run_tests.py
 .\build\bin\Debug\AppTestRunner.exe
 ```
 
+### Покрытие кода
+
+```powershell
+python automation/run_coverage.py
+```
+
+HTML-отчёт: `build/coverage/html/index.html`. В CI минимальный порог покрытия — 70% (`python automation/run_coverage.py --min 70`).
+
 ## Непрерывная интеграция (CI)
 
 Сборка автоматизирована через GitHub Actions на виртуальных машинах `windows-latest` (workflow `.github/workflows/build.yml`).
