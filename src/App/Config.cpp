@@ -37,7 +37,7 @@ AppConfig parseConfig(std::istream& input)
     try
     {
         config.title = require(json, "title").get<std::string>();
-        auto& window = require(json, "window");
+        const auto& window = require(json, "window");
         config.width = require(window, "width").get<int>();
         config.height = require(window, "height").get<int>();
     }
