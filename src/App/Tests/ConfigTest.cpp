@@ -40,3 +40,10 @@ TEST(ConfigTest, ShouldRejectWrongValueType)
 
     EXPECT_THROW(parseConfig(input), std::runtime_error);
 }
+
+TEST(ConfigTest, ShouldRejectInvalidJson)
+{
+    std::istringstream input{R"({"title": "App", "window": {"width": )"};
+
+    EXPECT_THROW(parseConfig(input), std::runtime_error);
+}
