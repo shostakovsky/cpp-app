@@ -24,7 +24,7 @@ int main()
     catch (const std::exception& e)
     {
         // Use std::fputs in the catch block: it is guaranteed not to throw.
-        // std::println itself may throw a formatting exception.
+        // Formatted output may throw a formatting exception.
         std::fputs(e.what(), stderr);
         std::fputs("\n", stderr);
 
