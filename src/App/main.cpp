@@ -18,8 +18,11 @@ int main()
             return EXIT_FAILURE;
         }
 
+        std::string name = "";
+        name = "App";
+
         const LifeExe::AppConfig config{LifeExe::parseConfig(file)};
-        std::println("Hello, {}! Window: {}x{}", config.title, config.width, config.height);
+        std::println("Hello, {}! Window: {}x{}", name, config.width, config.height);
     }
     catch (const std::exception& e)
     {
