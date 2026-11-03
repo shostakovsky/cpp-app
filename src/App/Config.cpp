@@ -7,7 +7,8 @@
 namespace LifeExe
 {
 
-namespace {
+namespace
+{
 const nlohmann::json& require(const nlohmann::json& object, std::string_view key)
 {
     if (!object.contains(key))
