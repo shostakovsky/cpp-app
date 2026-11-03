@@ -56,6 +56,17 @@ python automation/run_tidy.py
 
 ## Документация
 
+Портал: [https://shostakovsky.github.io/cpp-app/](https://shostakovsky.github.io/cpp-app/).
+
+Локальная сборка сайта (Doxygen + MkDocs):
+
+```powershell
+python automation/build_docs.py
+python automation/build_docs.py --serve
+```
+
+Справочник API строится из комментариев `///` в публичных заголовках; архитектурные и рабочие руководства — из Markdown в `docs/`.
+
 ## Структура проекта
 
 ```text
