@@ -1,104 +1,91 @@
 # App
 
-![build](https://github.com/shostakovsky/cpp-app/actions/workflows/build.yml/badge.svg)
+[![build](https://github.com/shostakovsky/cpp-app/actions/workflows/build.yml/badge.svg)](https://github.com/shostakovsky/cpp-app/actions/workflows/build.yml)
 
-Учебный проект курса по инженерному C++: консольное приложение App.
+Консольное приложение App читает параметры окна из `config.json` и выводит их в терминал. Учебный проект курса по инженерному C++: на нём отрабатываются сборка, тесты, качество кода и CI. Стек — C++23, CMake, Conan 2, MSVC (Visual Studio 2022), Python-скрипты в `automation/`.
+
+## Системные требования
+
+- Windows
+- Visual Studio 2022 (MSVC, C++ desktop development)
+- CMake 3.25+
+- Python 3
+- Conan 2
+- для сборки документации: Doxygen и зависимости из `requirements-docs.txt` (добавятся в этом спринте)
 
 ## Сборка и запуск
 
-Проект использует менеджер пакетов Conan 2 и мета-систему сборки CMake. Все команды выполняются из каталога проекта (`project/`). Профили и флаги лежат в `automation/common.py`.
+Все команды — из каталога `project/`. Общие пути и вызовы инструментов заданы в `automation/common.py`.
 
 ```powershell
 python automation/generate_project_files.py
 python automation/build_debug.py
-python automation/build_release.py
-python automation/clean.py
-
-# Запуск приложения (файл config.json читается из текущего каталога)
 .\build\bin\Debug\App.exe
 ```
 
-## Архитектура проекта
+Конфигурация Release: `python automation/build_release.py`. Полная очистка сборочных каталогов: `python automation/clean.py`.
 
-```text
-src/App/
-├── CMakeLists.txt   # project(App): цели AppLib (STATIC) и App (EXECUTABLE)
-├── Config.h         # публичный контракт библиотеки
-├── Config.cpp       # реализация парсинга конфигурации
-└── main.cpp         # тонкая точка входа
-```
-
-Логика выделена в статическую библиотеку `AppLib`, а исполняемый файл `App` остаётся тонкой обёрткой над ней.
-
-## Тесты
-
-Исходные файлы тестов лежат в `src/App/Tests/`. Они проверяют корректность разбора конфигурационного файла.
+## Тестирование
 
 ```powershell
 python automation/run_tests.py
-# или напрямую:
-.\build\bin\Debug\AppTestRunner.exe
 ```
 
-### Покрытие кода
+Собирает Debug (при необходимости) и запускает юнит-тесты через CTest; JUnit-отчёт пишется в `build/test-report.xml`.
 
 ```powershell
 python automation/run_coverage.py
 ```
 
-HTML-отчёт: `build/coverage/html/index.html`. В CI минимальный порог покрытия — 70% (`python automation/run_coverage.py --min 70`).
-
-## Непрерывная интеграция (CI)
-
-Сборка автоматизирована через GitHub Actions на виртуальных машинах `windows-latest` (workflow `.github/workflows/build.yml`).
-
-На каждый `push` и pull request выполняются:
-
-- генерация зависимостей (`automation/generate_project_files.py`);
-- сборка конфигураций Debug и Release;
-- проверка стиля `clang-format` (`automation/format_files.py --check`).
-
-Готовый бинарник публикуется артефактом `app-release` (`build/bin/Release/App.exe` и `config.json`). Его можно скачать в секции **Artifacts** на странице завершённого запуска или командой:
-
-```powershell
-gh run download --name app-release --dir ..\from-ci
-cd ..\from-ci
-.\build\bin\Release\App.exe
-```
-
-Запускайте `App.exe` из корня скачанного каталога: программа читает `config.json` из текущего рабочего каталога.
-
-## Стиль кода
-
-стиль зафиксирован в .clang-format (на базе Microsoft);
-
-```powershell
-python automation/format_files.py
-python automation/format_files.py --check
-```
-
-рекомендация включить автоформатирование при сохранении в IDE.
-
-## Статический анализ
-
-Все сборочные цели компилируются с предупреждениями как ошибками (`/W4 /WX`).
-
-Локальный запуск clang-tidy:
-
-```powershell
-python automation/run_tidy.py
-```
-
-Правила анализатора заданы в `.clang-tidy`.
-
-## AddressSanitizer
-
-Инструментированная сборка с AddressSanitizer живёт в отдельном каталоге `build-asan/`: её нельзя смешивать с обычными объектными файлами из `build/`, а накладные расходы по CPU и памяти делают такую конфигурацию непригодной для повседневной разработки.
-
-Локальный прогон тестов под контролем санитайзера:
+Измеряет покрытие через OpenCppCoverage. HTML-отчёт: `build/coverage/html/index.html`. В CI порог: `python automation/run_coverage.py --min 70`.
 
 ```powershell
 python automation/run_asan.py
 ```
 
-В CI шаг `Tests under AddressSanitizer` запускает ту же команду после `Build Debug` и до обычных тестов. Любой выход за границы памяти или use-after-free останавливает пайплайн с подробным отчётом ASan.
+Отдельная сборка в `build-asan/` с AddressSanitizer и прогон тестов под ней; обычный `build/` не затрагивается.
+
+## Контроль качества кода
+
+```powershell
+python automation/format_files.py --check
+python automation/run_tidy.py
+```
+
+Стиль кода — `.clang-format` (база Microsoft); правила clang-tidy — `.clang-tidy`. Автоформатирование: `python automation/format_files.py`.
+
+## Документация
+
+## Структура проекта
+
+```text
+project/
+├── src/App/           # исходники: AppLib, App, тесты
+├── automation/        # скрипты генерации, сборки, тестов и проверок
+├── profiles/          # профили Conan (Debug / Release)
+├── cmake/             # общие модули CMake (warnings, sanitizers, format)
+├── .github/workflows/ # GitHub Actions (build.yml)
+├── CMakeLists.txt
+├── conanfile.txt
+└── config.json        # конфигурация приложения (рабочий каталог запуска)
+```
+
+- `src/` — библиотека `AppLib`, исполняемый файл `App` и юнит-тесты.
+- `automation/` — единая точка входа для локальной сборки и тех же шагов в CI.
+- `profiles/` — настройки компилятора и зависимостей Conan для Windows/MSVC.
+- `.github/` — workflow непрерывной интеграции на `windows-latest`.
+
+## Непрерывная интеграция (CI)
+
+Пайплайн `.github/workflows/build.yml` на `windows-latest` при каждом `push` и pull request:
+
+1. `generate_project_files.py` — зависимости и генерация сборочного дерева;
+2. `build_debug.py` — Debug;
+3. `run_asan.py` — тесты под AddressSanitizer;
+4. `run_tests.py` — обычные юнит-тесты;
+5. `run_coverage.py --min 70` — покрытие с порогом 70%;
+6. `build_release.py` — Release;
+7. `format_files.py --check` — проверка стиля;
+8. `run_tidy.py` — статический анализ.
+
+Артефакты: `app-release` (`build/bin/Release/App.exe` и `config.json`), `coverage-report` (HTML), `test-report` (JUnit XML).

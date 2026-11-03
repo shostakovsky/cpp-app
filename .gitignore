@@ -1,5 +1,6 @@
 build/
 build-asan/
+docs/api/
 .vs/
 CMakeUserPresets.json
 LastCoverageResults.log
