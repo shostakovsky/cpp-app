@@ -1,6 +1,9 @@
 # App
 
 [![build](https://github.com/shostakovsky/cpp-app/actions/workflows/build.yml/badge.svg)](https://github.com/shostakovsky/cpp-app/actions/workflows/build.yml)
+[![tests](https://github.com/shostakovsky/cpp-app/actions/workflows/tests.yml/badge.svg)](https://github.com/shostakovsky/cpp-app/actions/workflows/tests.yml)
+[![code-quality](https://github.com/shostakovsky/cpp-app/actions/workflows/code-quality.yml/badge.svg)](https://github.com/shostakovsky/cpp-app/actions/workflows/code-quality.yml)
+[![docs](https://github.com/shostakovsky/cpp-app/actions/workflows/docs.yml/badge.svg)](https://github.com/shostakovsky/cpp-app/actions/workflows/docs.yml)
 
 Консольное приложение App читает параметры окна из `config.json` и выводит их в терминал. Учебный проект курса по инженерному C++: на нём отрабатываются сборка, тесты, качество кода и CI. Стек — C++23, CMake, Conan 2, MSVC (Visual Studio 2022), Python-скрипты в `automation/`.
 
@@ -75,7 +78,7 @@ project/
 ├── automation/        # скрипты генерации, сборки, тестов и проверок
 ├── profiles/          # профили Conan (Debug / Release)
 ├── cmake/             # общие модули CMake (warnings, sanitizers, format)
-├── .github/workflows/ # GitHub Actions (build.yml)
+├── .github/workflows/ # GitHub Actions (build, tests, code-quality, docs)
 ├── CMakeLists.txt
 ├── conanfile.txt
 └── config.json        # конфигурация приложения (рабочий каталог запуска)
@@ -84,19 +87,15 @@ project/
 - `src/` — библиотека `AppLib`, исполняемый файл `App` и юнит-тесты.
 - `automation/` — единая точка входа для локальной сборки и тех же шагов в CI.
 - `profiles/` — настройки компилятора и зависимостей Conan для Windows/MSVC.
-- `.github/` — workflow непрерывной интеграции на `windows-latest`.
+- `.github/` — четыре независимых workflow GitHub Actions.
 
 ## Непрерывная интеграция (CI)
 
-Пайплайн `.github/workflows/build.yml` на `windows-latest` при каждом `push` и pull request:
+Четыре параллельных workflow на `push` в `master` и на pull request (пакеты Conan кэшируются по `conanfile.txt` и `profiles/`):
 
-1. `generate_project_files.py` — зависимости и генерация сборочного дерева;
-2. `build_debug.py` — Debug;
-3. `run_asan.py` — тесты под AddressSanitizer;
-4. `run_tests.py` — обычные юнит-тесты;
-5. `run_coverage.py --min 70` — покрытие с порогом 70%;
-6. `build_release.py` — Release;
-7. `format_files.py --check` — проверка стиля;
-8. `run_tidy.py` — статический анализ.
-
-Артефакты: `app-release` (`build/bin/Release/App.exe` и `config.json`), `coverage-report` (HTML), `test-report` (JUnit XML).
+| Workflow | Файл | Задачи | Артефакты |
+| --- | --- | --- | --- |
+| **build** | `build.yml` | Матрица Debug/Release: Conan, генерация, сборка | `app-Debug`, `app-Release` (`App.exe` + `config.json`) |
+| **tests** | `tests.yml` | ASan, юнит-тесты, покрытие (`--min 70`) | `coverage-report` (HTML), `test-report` (JUnit) |
+| **code-quality** | `code-quality.yml` | `format_files.py --check`, `run_tidy.py` | — |
+| **docs** | `docs.yml` | Doxygen + MkDocs; деплой на GitHub Pages из `master` | сайт [shostakovsky.github.io/cpp-app](https://shostakovsky.github.io/cpp-app/) |
