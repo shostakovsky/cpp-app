@@ -9,12 +9,28 @@
 
 ## Системные требования
 
-- Windows
+### Windows
+
 - Visual Studio 2022 (MSVC, C++ desktop development)
 - CMake 3.25+
 - Python 3
 - Conan 2
-- для сборки документации: Doxygen и зависимости из `requirements-docs.txt` (добавятся в этом спринте)
+- для документации: Doxygen и `pip install -r requirements-docs.txt`
+
+Бинарники: `build/bin/<Config>/` (например `build\bin\Debug\App.exe`).
+
+### Linux
+
+Ubuntu 24.04 (WSL / CI) — пакеты из шага настройки окружения:
+
+```bash
+sudo apt install -y g++-14 cmake make clang-tidy clang-format pipx
+pipx install conan
+```
+
+На Fedora (локальная разработка): GCC ≥ 14 (`gcc-c++`), `cmake`, `make`, `clang-tools-extra` (`clang-tidy`, `clang-format`), `python3`, Conan 2 (`pip` / `pipx`).
+
+Интерпретатор — `python3`. Бинарники: `build/<Config>/bin/` (например `build/Debug/bin/App`).
 
 ## Сборка и запуск
 
@@ -86,16 +102,16 @@ project/
 
 - `src/` — библиотека `AppLib`, исполняемый файл `App` и юнит-тесты.
 - `automation/` — единая точка входа для локальной сборки и тех же шагов в CI.
-- `profiles/` — настройки компилятора и зависимостей Conan для Windows/MSVC.
-- `.github/` — четыре независимых workflow GitHub Actions.
+- `profiles/` — профили Conan для Windows/MSVC и Linux/GCC 14.
+- `.github/` — четыре независимых workflow GitHub Actions (Windows + Linux).
 
 ## Непрерывная интеграция (CI)
 
-Четыре параллельных workflow на `push` в `master` и на pull request (пакеты Conan кэшируются по `conanfile.txt` и `profiles/`):
+Четыре параллельных workflow на `push` в `master` и на pull request (пакеты Conan кэшируются по `conanfile.txt` и `profiles/`). Слияние в `master` возможно только через Pull Request при зелёных обязательных проверках — все девять contexts из `protection.json`: `build-Debug`, `build-Release`, `linux-Debug`, `linux-Release`, `tests`, `linux-tests`, `code-quality`, `linux-tidy`, `docs`.
 
 | Workflow | Файл | Задачи | Артефакты |
 | --- | --- | --- | --- |
-| **build** | `build.yml` | Матрица Debug/Release: Conan, генерация, сборка | `app-Debug`, `app-Release` (`App.exe` + `config.json`) |
-| **tests** | `tests.yml` | ASan, юнит-тесты, покрытие (`--min 70`) | `coverage-report` (HTML), `test-report` (JUnit) |
-| **code-quality** | `code-quality.yml` | `format_files.py --check`, `run_tidy.py` | — |
+| **build** | `build.yml` | Windows: матрица Debug/Release. Linux: `linux-Debug`, `linux-Release` (GCC 14) | `app-Debug`, `app-Release`; `app-linux-Debug`, `app-linux-Release` |
+| **tests** | `tests.yml` | Windows: ASan, тесты, покрытие (`--min 70`). Linux: `linux-tests` (ASan+UBSan, тесты) | `coverage-report`, `test-report` (Windows) |
+| **code-quality** | `code-quality.yml` | Windows: format + tidy. Linux: `linux-tidy` | — |
 | **docs** | `docs.yml` | Doxygen + MkDocs; деплой на GitHub Pages из `master` | сайт [shostakovsky.github.io/cpp-app](https://shostakovsky.github.io/cpp-app/) |

@@ -1,8 +1,16 @@
 # Разработка
 
 Локальная сборка, тесты и проверки качества запускаются теми же скриптами, что
-и CI. Общие пути и вызов subprocess собраны в `automation/common.py`: скрипты
-можно вызывать из любого текущего каталога.
+и CI — одни и те же файлы `automation/` работают и на Windows, и на Linux
+(`python` / `python3`). Общие пути и вызов subprocess собраны в
+`automation/common.py`: скрипты можно вызывать из любого текущего каталога.
+
+Раскладка сборочных деревьев различается из‑за генераторов CMake:
+
+| Платформа | Каталог конфигурации | Бинарники |
+| --- | --- | --- |
+| Windows (MSVC, multi-config) | `build/` | `build/bin/<Config>/` |
+| Linux (GCC, single-config) | `build/<Config>/` | `build/<Config>/bin/` |
 
 ## Скрипты `automation/`
 
@@ -20,7 +28,7 @@
 | `build_docs.py` | Документация проекта. Doxygen + MkDocs |
 
 Конфигурации стиля: `.clang-format`, `.clang-tidy`. Профили Conan:
-`profiles/windows-msvc-debug`, `profiles/windows-msvc-release`.
+`profiles/windows-msvc-{debug,release}`, `profiles/linux-gcc-{debug,release}`.
 
 ## Перед коммитом
 
@@ -34,8 +42,8 @@
 4. При работе с памятью/указателями — `python automation/run_asan.py`.
 5. Перед push в основную ветку — `python automation/run_tidy.py`.
 
-На GitHub Actions те же шаги выполняются на `windows-latest` при каждом
-`push` и pull request (см. `.github/workflows/build.yml`).
+На GitHub Actions те же шаги выполняются на `windows-latest` и `ubuntu-latest`
+при каждом `push` в `master` и pull request (см. `.github/workflows/`).
 
 ## Сборка документации
 
