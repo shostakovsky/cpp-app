@@ -115,3 +115,13 @@ project/
 | **tests** | `tests.yml` | Windows: ASan, тесты, покрытие (`--min 70`). Linux: `linux-tests` (ASan+UBSan, тесты) | `coverage-report`, `test-report` (Windows) |
 | **code-quality** | `code-quality.yml` | Windows: format + tidy. Linux: `linux-tidy` | — |
 | **docs** | `docs.yml` | Doxygen + MkDocs; деплой на GitHub Pages из `master` | сайт [shostakovsky.github.io/cpp-app](https://shostakovsky.github.io/cpp-app/) |
+
+## Новый проект по образцу
+
+Каркас нового C++-проекта (CMake, Conan, тесты, анализ, санитайзеры, документация, CI) разворачивается скиллом по спецификации [SCAFFOLD.md](SCAFFOLD.md):
+
+```text
+/new-cpp-project <Имя> [каталог]
+```
+
+Пример: `/new-cpp-project Sandbox ../sandbox`. Канонический файл скилла — `.claude/skills/new-cpp-project/SKILL.md` (адаптер Antigravity — `.agents/skills.json`).
