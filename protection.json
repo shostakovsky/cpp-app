@@ -1,9 +1,19 @@
 {
-    "required_status_checks": {
-      "strict": false,
-      "contexts": ["build-Debug", "build-Release", "tests", "code-quality", "docs"]
-    },
-    "enforce_admins": true,
-    "required_pull_request_reviews": null,
-    "restrictions": null
-  }
+  "required_status_checks": {
+    "strict": false,
+    "contexts": [
+      "build-Debug",
+      "build-Release",
+      "linux-Debug",
+      "linux-Release",
+      "tests",
+      "linux-tests",
+      "code-quality",
+      "linux-tidy",
+      "docs"
+    ]
+  },
+  "enforce_admins": true,
+  "required_pull_request_reviews": null,
+  "restrictions": null
+}

@@ -1,0 +1,15 @@
+{% set compiler, version, compiler_exe = detect_api.detect_default_compiler() %}
+{% set version = detect_api.default_compiler_version(compiler, version) %}
+[settings]
+arch=x86_64
+build_type=Release
+compiler=gcc
+compiler.cppstd=23
+compiler.libcxx=libstdc++11
+compiler.version={{ version }}
+os=Linux
+
+[conf]
+# System default compilers. Require GCC >= 14 for C++23 <print> / std::println.
+# On Ubuntu 24.04 make g++-14 the default (update-alternatives) or set CXX before Conan.
+tools.build:compiler_executables={"c": "gcc", "cpp": "g++"}
