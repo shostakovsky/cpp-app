@@ -68,6 +68,10 @@ def conan_install(configuration: str) -> None:
         "-pr:h", profile(configuration),
         "-pr:b", profile(configuration),
         "--build=missing",
+        # Without this Conan writes CMakeUserPresets.json into the project root;
+        # CMake loads it together with CMakePresets.json, and its presets for
+        # several build trees collide by name and break both files for IDEs.
+        "--conf=tools.cmake.cmaketoolchain:user_presets=",
     ])
 
 

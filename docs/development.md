@@ -30,6 +30,27 @@
 Конфигурации стиля: `.clang-format`, `.clang-tidy`. Профили Conan:
 `profiles/windows-msvc-{debug,release}`, `profiles/linux-gcc-{debug,release}`.
 
+## Работа в IDE
+
+Visual Studio, CLion и VS Code открывают проект как CMake-папку по
+`CMakePresets.json`, без предварительного запуска скриптов:
+
+- Visual Studio: File → Open → Folder, конфигурация `windows-msvc-debug`;
+- CLion: Settings → Build, Execution, Deployment → CMake, включить пресеты `linux-gcc-*`.
+
+Пресет подключает `cmake/conan_provider.cmake` (dependency provider из
+[cmake-conan](https://github.com/conan-io/cmake-conan)): на первом
+`find_package()` CMake сам вызывает `conan install` с профилем из `profiles/`
+и ставит зависимости в `build/<пресет>/conan`. Удаление каталога сборки
+(«Delete Cache» в Visual Studio) безопасно: следующий configure восстановит всё сам.
+
+Скрипты `automation/` и CI пресеты не используют и работают как раньше.
+
+`conan_provider.cmake` скопирован без изменений с коммита
+[`dff3768`](https://github.com/conan-io/cmake-conan/blob/dff3768b8756f8982be4bf987da72ed5bf4b9981/conan_provider.cmake)
+ветки `develop2` — последнего, работающего с генератором `CMakeDeps`. Обновление —
+вручную: заменить файл версией с нового коммита и проверить пресеты.
+
 ## Перед коммитом
 
 Минимальный чек-лист (из корня `project/`):

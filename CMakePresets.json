@@ -1,0 +1,167 @@
+{
+    "version": 6,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 25,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "base",
+            "hidden": true,
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_PROJECT_TOP_LEVEL_INCLUDES": "${sourceDir}/cmake/conan_provider.cmake",
+                "CONAN_INSTALL_ARGS": "--build=missing;--conf=tools.cmake.cmaketoolchain:user_presets=",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_CXX_EXTENSIONS": "OFF"
+            }
+        },
+        {
+            "name": "windows-msvc",
+            "hidden": true,
+            "inherits": "base",
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
+            "toolset": {
+                "value": "host=x64",
+                "strategy": "external"
+            },
+            "cacheVariables": {
+                "CMAKE_CXX_COMPILER": "cl"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            }
+        },
+        {
+            "name": "windows-msvc-debug",
+            "displayName": "Windows MSVC Debug",
+            "inherits": "windows-msvc",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CONAN_HOST_PROFILE": "${sourceDir}/profiles/windows-msvc-debug",
+                "CONAN_BUILD_PROFILE": "${sourceDir}/profiles/windows-msvc-debug"
+            }
+        },
+        {
+            "name": "windows-msvc-release",
+            "displayName": "Windows MSVC Release",
+            "inherits": "windows-msvc",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CONAN_HOST_PROFILE": "${sourceDir}/profiles/windows-msvc-release",
+                "CONAN_BUILD_PROFILE": "${sourceDir}/profiles/windows-msvc-release"
+            }
+        },
+        {
+            "name": "windows-msvc-asan",
+            "displayName": "Windows MSVC Debug + ASan",
+            "inherits": "windows-msvc-debug",
+            "cacheVariables": {
+                "ENABLE_ASAN": "ON"
+            }
+        },
+        {
+            "name": "linux-gcc",
+            "hidden": true,
+            "inherits": "base",
+            "cacheVariables": {
+                "CMAKE_CXX_COMPILER": "g++"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            }
+        },
+        {
+            "name": "linux-gcc-debug",
+            "displayName": "Linux GCC Debug",
+            "inherits": "linux-gcc",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CONAN_HOST_PROFILE": "${sourceDir}/profiles/linux-gcc-debug",
+                "CONAN_BUILD_PROFILE": "${sourceDir}/profiles/linux-gcc-debug"
+            }
+        },
+        {
+            "name": "linux-gcc-release",
+            "displayName": "Linux GCC Release",
+            "inherits": "linux-gcc",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CONAN_HOST_PROFILE": "${sourceDir}/profiles/linux-gcc-release",
+                "CONAN_BUILD_PROFILE": "${sourceDir}/profiles/linux-gcc-release"
+            }
+        },
+        {
+            "name": "linux-gcc-asan",
+            "displayName": "Linux GCC Debug + ASan/UBSan",
+            "inherits": "linux-gcc-debug",
+            "cacheVariables": {
+                "ENABLE_ASAN": "ON"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "windows-msvc-debug",
+            "configurePreset": "windows-msvc-debug"
+        },
+        {
+            "name": "windows-msvc-release",
+            "configurePreset": "windows-msvc-release"
+        },
+        {
+            "name": "windows-msvc-asan",
+            "configurePreset": "windows-msvc-asan"
+        },
+        {
+            "name": "linux-gcc-debug",
+            "configurePreset": "linux-gcc-debug"
+        },
+        {
+            "name": "linux-gcc-release",
+            "configurePreset": "linux-gcc-release"
+        },
+        {
+            "name": "linux-gcc-asan",
+            "configurePreset": "linux-gcc-asan"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "test-base",
+            "hidden": true,
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "windows-msvc-debug",
+            "inherits": "test-base",
+            "configurePreset": "windows-msvc-debug"
+        },
+        {
+            "name": "windows-msvc-asan",
+            "inherits": "test-base",
+            "configurePreset": "windows-msvc-asan"
+        },
+        {
+            "name": "linux-gcc-debug",
+            "inherits": "test-base",
+            "configurePreset": "linux-gcc-debug"
+        },
+        {
+            "name": "linux-gcc-asan",
+            "inherits": "test-base",
+            "configurePreset": "linux-gcc-asan"
+        }
+    ]
+}
