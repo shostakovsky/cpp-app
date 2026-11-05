@@ -1,14 +1,9 @@
-"""Install dependencies for Debug and Release and configure the CMake project."""
+"""Configure the Debug and Release build trees from CMakePresets.json.
 
-from common import CONFIGURATIONS, IS_WINDOWS, conan_install, configure
+Conan installs the dependencies during the configure of each tree.
+"""
 
-if IS_WINDOWS:
-    # One multi-config tree: both Conan profiles, then a single cmake configure.
-    for configuration in CONFIGURATIONS:
-        conan_install(configuration)
-    configure("Debug")
-else:
-    # One tree per configuration: install + configure for each.
-    for configuration in CONFIGURATIONS:
-        conan_install(configuration)
-        configure(configuration)
+from common import configure
+
+for variant in ("debug", "release"):
+    configure(variant)

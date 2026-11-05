@@ -17,32 +17,36 @@
 - Conan 2
 - для документации: Doxygen и `pip install -r requirements-docs.txt`
 
-Бинарники: `build/bin/<Config>/` (например `build\bin\Debug\App.exe`).
+Скрипты сами подгружают окружение MSVC из Visual Studio, Developer Command Prompt не нужен.
+
+Бинарники: `build/<preset>/bin/` (например `build\windows-msvc-debug\bin\App.exe`).
 
 ### Linux
 
 Ubuntu 24.04 (WSL / CI) — пакеты из шага настройки окружения:
 
 ```bash
-sudo apt install -y g++-14 cmake make clang-tidy clang-format pipx
+sudo apt install -y g++-14 cmake ninja-build clang-tidy clang-format pipx
 pipx install conan
 ```
 
-На Fedora (локальная разработка): GCC ≥ 14 (`gcc-c++`), `cmake`, `make`, `clang-tools-extra` (`clang-tidy`, `clang-format`), `python3`, Conan 2 (`pip` / `pipx`).
+На Fedora (локальная разработка): GCC ≥ 14 (`gcc-c++`), `cmake`, `ninja-build`, `clang-tools-extra` (`clang-tidy`, `clang-format`), `python3`, Conan 2 (`pip` / `pipx`).
 
-Интерпретатор — `python3`. Бинарники: `build/<Config>/bin/` (например `build/Debug/bin/App`).
+Интерпретатор — `python3`. Бинарники: `build/<preset>/bin/` (например `build/linux-gcc-debug/bin/App`).
 
 ## Сборка и запуск
 
-Все команды — из каталога `project/`. Общие пути и вызовы инструментов заданы в `automation/common.py`.
+Все команды — из каталога `project/`. Настройки сборки описаны в `CMakePresets.json`; скрипты `automation/` выбирают пресет платформы и вызывают с ним CMake, как это делает IDE.
 
 ```powershell
 python automation/generate_project_files.py
 python automation/build_debug.py
-.\build\bin\Debug\App.exe
+.\build\windows-msvc-debug\bin\App.exe
 ```
 
-Конфигурация Release: `python automation/build_release.py`. Полная очистка сборочных каталогов: `python automation/clean.py`.
+`config.json` копируется рядом с исполняемым файлом при конфигурации. Конфигурация Release: `python automation/build_release.py`. Полная очистка сборочных каталогов: `python automation/clean.py`.
+
+Без скриптов — те же шаги одной командой: `cmake --workflow --preset windows-msvc-debug` (или `linux-gcc-debug`). Visual Studio, CLion и VS Code открывают каталог как CMake-проект по тем же пресетам (см. [docs/development.md](docs/development.md)).
 
 ## Тестирование
 
@@ -50,19 +54,19 @@ python automation/build_debug.py
 python automation/run_tests.py
 ```
 
-Собирает Debug (при необходимости) и запускает юнит-тесты через CTest; JUnit-отчёт пишется в `build/test-report.xml`.
+Собирает Debug (при необходимости) и запускает юнит-тесты через CTest; JUnit-отчёт пишется в `build/<preset>/test-report.xml`.
 
 ```powershell
 python automation/run_coverage.py
 ```
 
-Измеряет покрытие через OpenCppCoverage. HTML-отчёт: `build/coverage/html/index.html`. В CI порог: `python automation/run_coverage.py --min 70`.
+Измеряет покрытие через OpenCppCoverage. HTML-отчёт: `build/windows-msvc-debug/coverage/html/index.html`. В CI порог: `python automation/run_coverage.py --min 70`.
 
 ```powershell
 python automation/run_asan.py
 ```
 
-Отдельная сборка в `build-asan/` с AddressSanitizer и прогон тестов под ней; обычный `build/` не затрагивается.
+Отдельная сборка пресетом `*-asan` в `build/<платформа>-asan/` с AddressSanitizer (на Linux ещё UBSan) и прогон тестов под ней; обычные сборки не затрагиваются.
 
 ## Контроль качества кода
 
@@ -93,11 +97,12 @@ project/
 ├── src/App/           # исходники: AppLib, App, тесты
 ├── automation/        # скрипты генерации, сборки, тестов и проверок
 ├── profiles/          # профили Conan (Debug / Release)
-├── cmake/             # общие модули CMake (warnings, sanitizers, format)
+├── cmake/             # модули CMake (warnings, sanitizers, format) и conan_provider.cmake
 ├── .github/workflows/ # GitHub Actions (build, tests, code-quality, docs)
 ├── CMakeLists.txt
+├── CMakePresets.json  # пресеты сборки для скриптов, CI и IDE
 ├── conanfile.txt
-└── config.json        # конфигурация приложения (рабочий каталог запуска)
+└── config.json        # конфигурация приложения (копируется рядом с App)
 ```
 
 - `src/` — библиотека `AppLib`, исполняемый файл `App` и юнит-тесты.

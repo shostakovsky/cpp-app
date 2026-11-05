@@ -3,113 +3,124 @@
 All scripts run from any directory: paths are computed from this file,
 not from the current working directory.
 
-Windows and Linux differ in one thing: the Visual Studio generator keeps
-Debug and Release in one build tree (build/, binaries in build/bin/<Config>),
-while Makefiles keep one configuration per tree (build/<Config>, binaries in
-build/<Config>/bin). Everything else goes through the same commands.
+Build settings live in CMakePresets.json; the scripts only choose a preset
+and pass it to cmake, cmake --build and ctest, as an IDE does. A preset is
+named <platform>-<variant> (windows-msvc-debug, linux-gcc-asan, ...), its build
+tree is build/<preset> and executables land in build/<preset>/bin. Conan
+installs the dependencies on the first configure of a tree, through
+cmake/conan_provider.cmake.
+
+The Ninja generator needs the MSVC tools (cl.exe, the Windows SDK) in the
+environment, which a Developer Command Prompt sets up. Started from a plain
+console, the scripts load that environment from Visual Studio themselves.
 """
 
 from __future__ import annotations
 
+import json
+import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-PROFILES_DIR = PROJECT_ROOT / "profiles"
 IS_WINDOWS = sys.platform == "win32"
+PLATFORM = "windows-msvc" if IS_WINDOWS else "linux-gcc"
 
-CONFIGURATIONS = ("Debug", "Release")
+VSWHERE = Path(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)"), "Microsoft Visual Studio", "Installer", "vswhere.exe")
+
+_environment: dict[str, str] | None = None
+
+
+def fail(message: str) -> None:
+    print(message, file=sys.stderr)
+    sys.exit(1)
+
+
+def preset(variant: str) -> str:
+    """Preset for this platform; variant is debug, release or asan."""
+    return f"{PLATFORM}-{variant}"
+
+
+def build_dir(variant: str) -> Path:
+    return PROJECT_ROOT / "build" / preset(variant)
+
+
+def bin_dir(variant: str) -> Path:
+    return build_dir(variant) / "bin"
+
+
+def relative(path: Path) -> str:
+    """Path relative to the project root, forward slashes."""
+    return path.relative_to(PROJECT_ROOT).as_posix()
+
+
+def _msvc_environment() -> dict[str, str]:
+    """Environment of a Developer Command Prompt for x64, read from vcvars64.bat."""
+    if not VSWHERE.is_file():
+        fail(f"Visual Studio not found: {VSWHERE} is missing")
+    found = subprocess.run(
+        [str(VSWHERE), "-latest", "-products", "*",
+         "-requires", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+         "-property", "installationPath"],
+        capture_output=True, text=True)
+    installation = found.stdout.strip()
+    if not installation:
+        fail("Visual Studio with the C++ x64 tools not found (vswhere)")
+    vcvars = Path(installation, "VC", "Auxiliary", "Build", "vcvars64.bat")
+    # Python prints the environment as ASCII-only JSON: the output of cmd's own
+    # 'set' depends on the console code page and garbles non-ASCII paths.
+    dump = f'"{sys.executable}" -c "import json, os; print(json.dumps(dict(os.environ)))"'
+    result = subprocess.run(f'"{vcvars}" >nul && {dump}', shell=True, capture_output=True, text=True)
+    if result.returncode != 0:
+        fail(f"{vcvars} failed:\n{result.stdout}{result.stderr}")
+    return json.loads(result.stdout.splitlines()[-1])
+
+
+def environment() -> dict[str, str]:
+    """Environment for the tools: on Windows it always has the MSVC tools."""
+    global _environment
+    if _environment is None:
+        if IS_WINDOWS and "VSINSTALLDIR" not in os.environ:
+            print("loading the MSVC environment from Visual Studio", flush=True)
+            _environment = _msvc_environment()
+        else:
+            _environment = dict(os.environ)
+    return _environment
 
 
 def run(command: list[str]) -> None:
     """Run a command from the project root; stop the script if it fails."""
     print("+", " ".join(command), flush=True)
-    result = subprocess.run(command, cwd=PROJECT_ROOT)
+    env = environment()
+    # Windows looks the program up on the PATH of this process, not of env.
+    program = shutil.which(command[0], path=env.get("PATH")) or command[0]
+    result = subprocess.run([program, *command[1:]], cwd=PROJECT_ROOT, env=env)
     if result.returncode != 0:
         print(f"command failed with exit code {result.returncode}", file=sys.stderr)
         sys.exit(result.returncode)
 
 
-def profile(configuration: str) -> str:
-    """Path to the Conan profile for this platform and configuration."""
-    platform = "windows-msvc" if IS_WINDOWS else "linux-gcc"
-    return f"profiles/{platform}-{configuration.lower()}"
+def configure(variant: str) -> None:
+    run(["cmake", "--preset", preset(variant)])
 
 
-def build_dir(configuration: str, root: str = "build") -> Path:
-    """Build tree for a configuration: one shared tree on Windows, one per configuration on Linux.
-
-    `root` is the tree's top directory; the sanitizer build uses "build-asan".
-    Keeping the platforms apart matters even for one machine: a project on C:
-    is visible from WSL as /mnt/c, and CMakeCache.txt remembers absolute paths.
-    """
-    return PROJECT_ROOT / root if IS_WINDOWS else PROJECT_ROOT / root / configuration
-
-
-def bin_dir(configuration: str) -> Path:
-    """Where the executables of a configuration end up."""
-    return build_dir(configuration) / "bin" / configuration if IS_WINDOWS else build_dir(configuration) / "bin"
-
-
-def toolchain(configuration: str) -> Path:
-    return build_dir(configuration) / "conan_toolchain.cmake"
-
-
-def relative(path: Path) -> str:
-    """Path as CMake and Conan see it: relative to the project root, forward slashes."""
-    return path.relative_to(PROJECT_ROOT).as_posix()
-
-
-def conan_install(configuration: str) -> None:
-    run([
-        "conan", "install", ".",
-        f"--output-folder={relative(build_dir(configuration))}",
-        "-pr:h", profile(configuration),
-        "-pr:b", profile(configuration),
-        "--build=missing",
-        # Without this Conan writes CMakeUserPresets.json into the project root;
-        # CMake loads it together with CMakePresets.json, and its presets for
-        # several build trees collide by name and break both files for IDEs.
-        "--conf=tools.cmake.cmaketoolchain:user_presets=",
-    ])
-
-
-def configure(configuration: str, build_tree: Path | None = None, extra: list[str] = ()) -> None:
-    """Configure a CMake build tree with the Conan toolchain.
-
-    On Linux the generator is single-configuration, so the configuration is
-    fixed here with CMAKE_BUILD_TYPE and a compile_commands.json is exported
-    for clang-tidy. On Windows --config is chosen at build time instead.
-    """
-    tree = build_tree or build_dir(configuration)
-    command = ["cmake", "-S", ".", "-B", relative(tree), f"-DCMAKE_TOOLCHAIN_FILE={toolchain(configuration)}"]
-    if not IS_WINDOWS:
-        command += [f"-DCMAKE_BUILD_TYPE={configuration}", "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"]
-    run(command + list(extra))
-
-
-def ensure_generated(configuration: str = "Debug") -> None:
-    """Generate project files for a configuration if its build tree does not exist yet."""
-    if (build_dir(configuration) / "CMakeCache.txt").exists():
+def ensure_configured(variant: str) -> None:
+    """Configure a build tree if it does not exist yet."""
+    if (build_dir(variant) / "CMakeCache.txt").exists():
         return
     print("build directory not found, generating project files first")
-    if IS_WINDOWS:
-        for each in CONFIGURATIONS:  # one tree holds both configurations
-            conan_install(each)
-    else:
-        conan_install(configuration)
-    configure(configuration)
+    configure(variant)
 
 
-def cmake_build(build_tree: Path, configuration: str) -> None:
-    """Build a tree; --config only means something to multi-configuration generators."""
-    command = ["cmake", "--build", relative(build_tree)]
-    if IS_WINDOWS:
-        command += ["--config", configuration]
+def cmake_build(variant: str, target: str | None = None) -> None:
+    command = ["cmake", "--build", "--preset", preset(variant)]
+    if target:
+        command += ["--target", target]
     run(command)
 
 
-def build(configuration: str) -> None:
-    ensure_generated(configuration)
-    cmake_build(build_dir(configuration), configuration)
+def build(variant: str) -> None:
+    ensure_configured(variant)
+    cmake_build(variant)

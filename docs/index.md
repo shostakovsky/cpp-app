@@ -18,11 +18,12 @@ Python-скрипты в каталоге `automation/`. Логика разбо
 ```powershell
 python automation/generate_project_files.py
 python automation/build_debug.py
-.\build\bin\Debug\App.exe
+.\build\windows-msvc-debug\bin\App.exe
 ```
 
-`config.json` читается из текущего рабочего каталога — запускайте `App.exe`
-из корня проекта (или укажите рабочий каталог отладчика в Visual Studio).
+`config.json` читается из текущего рабочего каталога. Сборка кладёт копию
+рядом с `App.exe`, поэтому приложение запускается и из корня проекта, и из
+`build\windows-msvc-debug\bin`, и из IDE. На Linux — `build/linux-gcc-debug/bin/App`.
 
 Конфигурация Release: `python automation/build_release.py`.
 Полная очистка сборочных каталогов: `python automation/clean.py`.
@@ -38,5 +39,6 @@ python automation/build_debug.py
 ## Зависимости
 
 Внешние пакеты задаются в `conanfile.txt` (в том числе `nlohmann_json` и
-`GTest`). Профили Conan для Debug и Release лежат в `profiles/`. Подробности
+`GTest`). Профили Conan для Debug и Release лежат в `profiles/`; Conan
+вызывается из CMake при конфигурации пресета (`cmake/conan_provider.cmake`). Подробности
 сборочной модели — на странице [Архитектура](architecture.md).

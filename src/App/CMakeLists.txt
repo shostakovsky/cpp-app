@@ -8,7 +8,9 @@ add_executable(${PROJECT_NAME} main.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_NAME}Lib)
 
 set_target_properties(${PROJECT_NAME}Lib ${PROJECT_NAME} PROPERTIES FOLDER "${PROJECT_NAME}")
-set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+# The app reads config.json from its working directory. A copy next to the
+# executable lets IDEs run and debug it with their default working directory.
+configure_file("${CMAKE_SOURCE_DIR}/config.json" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/config.json" COPYONLY)
 
 # Tests: link the same library the app uses; gtest_main provides main().
 add_executable(${PROJECT_NAME}TestRunner Tests/ConfigTest.cpp)
