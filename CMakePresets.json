@@ -14,8 +14,7 @@
             "cacheVariables": {
                 "CMAKE_PROJECT_TOP_LEVEL_INCLUDES": "${sourceDir}/cmake/conan_provider.cmake",
                 "CONAN_INSTALL_ARGS": "--build=missing;--conf=tools.cmake.cmaketoolchain:user_presets=",
-                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-                "CMAKE_CXX_EXTENSIONS": "OFF"
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
             }
         },
         {
@@ -162,6 +161,54 @@
             "name": "linux-gcc-asan",
             "inherits": "test-base",
             "configurePreset": "linux-gcc-asan"
+        }
+    ],
+    "workflowPresets": [
+        {
+            "name": "windows-msvc-debug",
+            "steps": [
+                { "type": "configure", "name": "windows-msvc-debug" },
+                { "type": "build", "name": "windows-msvc-debug" },
+                { "type": "test", "name": "windows-msvc-debug" }
+            ]
+        },
+        {
+            "name": "windows-msvc-release",
+            "steps": [
+                { "type": "configure", "name": "windows-msvc-release" },
+                { "type": "build", "name": "windows-msvc-release" }
+            ]
+        },
+        {
+            "name": "windows-msvc-asan",
+            "steps": [
+                { "type": "configure", "name": "windows-msvc-asan" },
+                { "type": "build", "name": "windows-msvc-asan" },
+                { "type": "test", "name": "windows-msvc-asan" }
+            ]
+        },
+        {
+            "name": "linux-gcc-debug",
+            "steps": [
+                { "type": "configure", "name": "linux-gcc-debug" },
+                { "type": "build", "name": "linux-gcc-debug" },
+                { "type": "test", "name": "linux-gcc-debug" }
+            ]
+        },
+        {
+            "name": "linux-gcc-release",
+            "steps": [
+                { "type": "configure", "name": "linux-gcc-release" },
+                { "type": "build", "name": "linux-gcc-release" }
+            ]
+        },
+        {
+            "name": "linux-gcc-asan",
+            "steps": [
+                { "type": "configure", "name": "linux-gcc-asan" },
+                { "type": "build", "name": "linux-gcc-asan" },
+                { "type": "test", "name": "linux-gcc-asan" }
+            ]
         }
     ]
 }

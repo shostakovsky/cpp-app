@@ -2,4 +2,4 @@
 
 from common import build
 
-build("Release")
+build("release")

@@ -2,8 +2,7 @@
 
 import sys
 
-from common import build_dir, ensure_generated, relative, run
+from common import cmake_build, ensure_configured
 
-ensure_generated("Debug")
-target = "format-check" if "--check" in sys.argv[1:] else "format"
-run(["cmake", "--build", relative(build_dir("Debug")), "--target", target])
+ensure_configured("debug")
+cmake_build("debug", "format-check" if "--check" in sys.argv[1:] else "format")

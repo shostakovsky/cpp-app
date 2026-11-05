@@ -2,4 +2,4 @@
 
 from common import build
 
-build("Debug")
+build("debug")

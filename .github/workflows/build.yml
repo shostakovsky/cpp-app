@@ -17,8 +17,10 @@ jobs:
         include:
           - configuration: Debug
             script: build_debug.py
+            preset: windows-msvc-debug
           - configuration: Release
             script: build_release.py
+            preset: windows-msvc-release
     steps:
       - uses: actions/checkout@v4
       - name: Install Conan
@@ -37,8 +39,8 @@ jobs:
         with:
           name: app-${{ matrix.configuration }}
           path: |
-            build/bin/${{ matrix.configuration }}/App.exe
-            config.json
+            build/${{ matrix.preset }}/bin/App.exe
+            build/${{ matrix.preset }}/bin/config.json
 
   linux:
     name: linux-${{ matrix.configuration }}
@@ -49,14 +51,16 @@ jobs:
         include:
           - configuration: Debug
             script: build_debug.py
+            preset: linux-gcc-debug
           - configuration: Release
             script: build_release.py
+            preset: linux-gcc-release
     steps:
       - uses: actions/checkout@v4
       - name: Install GCC 14 and Conan
         run: |
           sudo apt-get update
-          sudo apt-get install -y g++-14
+          sudo apt-get install -y g++-14 ninja-build
           # Profiles use system gcc/g++; make GCC 14 the default on Ubuntu 24.04.
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
           sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
@@ -75,5 +79,5 @@ jobs:
         with:
           name: app-linux-${{ matrix.configuration }}
           path: |
-            build/${{ matrix.configuration }}/bin/App
-            config.json
+            build/${{ matrix.preset }}/bin/App
+            build/${{ matrix.preset }}/bin/config.json

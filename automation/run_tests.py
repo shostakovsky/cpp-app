@@ -1,10 +1,9 @@
 """Build the Debug configuration and run all tests through CTest.
 
-Writes a JUnit report to build/test-report.xml for CI.
+Writes a JUnit report to build/<preset>/test-report.xml for CI.
 """
 
-from common import build, build_dir, relative, run
+from common import build, preset, run
 
-build("Debug")
-run(["ctest", "--test-dir", relative(build_dir("Debug")), "-C", "Debug", "--output-on-failure",
-     "--output-junit", "test-report.xml"])
+build("debug")
+run(["ctest", "--preset", preset("debug"), "--output-junit", "test-report.xml"])

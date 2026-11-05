@@ -16,10 +16,11 @@
 ```text
 <name>/
 ├── CMakeLists.txt                 # корень: project(MyEpicProject), C++23, модули, add_subdirectory
+├── CMakePresets.json              # пресеты сборки для скриптов, CI и IDE, см. раздел 2
 ├── conanfile.txt                  # nlohmann_json/3.12.0, gtest/1.18.0; generators CMakeDeps, CMakeToolchain
 ├── config.json                    # {"title": "<Name>", "window": {"width": 800, "height": 600}}
 ├── README.md                      # по схеме из раздела 9
-├── .gitignore                     # build/, build-asan/, .vs/, CMakeUserPresets.json, __pycache__/, docs/api/, LastCoverageResults.log
+├── .gitignore                     # build/, .vs/, CMakeUserPresets.json, __pycache__/, docs/api/, LastCoverageResults.log
 ├── .clang-format                  # Microsoft base, Allman, 4 пробела, ColumnLimit 140
 ├── .clang-tidy                    # см. раздел 6
 ├── Doxyfile                       # см. раздел 8
@@ -31,7 +32,8 @@
 ├── cmake/
 │   ├── CompilerWarnings.cmake     # set_project_warnings(target): /W4 /WX /permissive- | -Wall -Wextra -Wpedantic -Werror
 │   ├── Sanitizers.cmake           # option(ENABLE_ASAN), enable_sanitizers(target), см. раздел 7
-│   └── ClangFormat.cmake          # цели format и format-check, поиск clang-format в PATH и в Visual Studio
+│   ├── ClangFormat.cmake          # цели format и format-check, поиск clang-format в PATH и в Visual Studio
+│   └── conan_provider.cmake       # cmake-conan, коммит dff3768 ветки develop2, без изменений
 ├── automation/                    # см. раздел 4
 ├── src/<Name>/
 │   ├── CMakeLists.txt             # project(<Name>); цели <Name>Lib STATIC, <Name>, <Name>TestRunner
@@ -42,17 +44,18 @@
 └── .github/workflows/
     ├── build.yml                  # матрица Debug/Release на Windows и Linux, артефакты сборки
     ├── tests.yml                  # Windows: ASan, тесты, покрытие --min 70, отчёты; Linux: ASan+UBSan, тесты
-    ├── code-quality.yml           # clang-format --check, clang-tidy на Windows (MSBuild) и Linux (compile_commands)
+    ├── code-quality.yml           # clang-format --check, clang-tidy по compile_commands на Windows и Linux
     └── docs.yml                   # Doxygen + MkDocs, публикация на Pages только с основной ветки
 ```
 
 ## 2. Сборка
 
-- CMake 3.25+, `CMAKE_CXX_STANDARD 23`, `CMAKE_CXX_STANDARD_REQUIRED ON`.
+- CMake 3.25+, `CMAKE_CXX_STANDARD 23`, `CMAKE_CXX_STANDARD_REQUIRED ON`,
+  `CMAKE_CXX_EXTENSIONS OFF`.
 - Корень: `project(MyEpicProject LANGUAGES CXX)`, `find_package(nlohmann_json REQUIRED)`,
   `find_package(GTest REQUIRED)`, `enable_testing()`, `USE_FOLDERS ON`,
   `CMAKE_RUNTIME_OUTPUT_DIRECTORY` и `CMAKE_ARCHIVE_OUTPUT_DIRECTORY` =
-  `${CMAKE_BINARY_DIR}/bin`, `VS_STARTUP_PROJECT <Name>`,
+  `${CMAKE_BINARY_DIR}/bin`,
   `include(cmake/CompilerWarnings.cmake)`, `include(cmake/Sanitizers.cmake)` **до**
   `add_subdirectory(src/<Name>)`, `include(cmake/ClangFormat.cmake)` после.
 - Подпроект: имена целей только через `${PROJECT_NAME}`, `${PROJECT_NAME}Lib`,
@@ -61,10 +64,21 @@
   Исполняемый файл — только `main.cpp`. Тест-раннер линкует библиотеку и
   `GTest::gtest_main`; `gtest_discover_tests(... DISCOVERY_TIMEOUT 30)`.
   `set_project_warnings` и `enable_sanitizers` на всех трёх целях.
-  `VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}` у исполняемого файла.
-- Conan 2: `conan install` в `build/` (Windows, обе конфигурации в один каталог)
-  или `build/<Config>/` (Linux), `--build=missing`, toolchain через
-  `-DCMAKE_TOOLCHAIN_FILE`.
+  `configure_file` копирует `config.json` в `${CMAKE_RUNTIME_OUTPUT_DIRECTORY}`
+  (`COPYONLY`): приложение находит его при запуске из IDE.
+- `CMakePresets.json` (version 6) — единственный источник настроек сборки.
+  Скрытый `base`: генератор Ninja, `binaryDir` `${sourceDir}/build/${presetName}`,
+  `CMAKE_PROJECT_TOP_LEVEL_INCLUDES` = `cmake/conan_provider.cmake`,
+  `CONAN_INSTALL_ARGS` = `--build=missing;--conf=tools.cmake.cmaketoolchain:user_presets=`,
+  `CMAKE_EXPORT_COMPILE_COMMANDS ON`. Скрытые `windows-msvc` (x64 и
+  `host=x64` со strategy `external`, `cl`, condition Windows) и `linux-gcc`
+  (`g++`, condition Linux). Видимые `<платформа>-debug`, `-release` (`CMAKE_BUILD_TYPE`,
+  `CONAN_HOST_PROFILE` и `CONAN_BUILD_PROFILE` = профиль из `profiles/`) и
+  `-asan` (наследует debug, `ENABLE_ASAN ON`). Build-пресеты для всех шести,
+  test-пресеты для debug и asan (`outputOnFailure`), workflow-пресеты:
+  debug и asan — configure, build, test; release — configure, build.
+- Conan 2: `conan install` вызывает dependency provider на первом
+  `find_package()`, вывод в `build/<пресет>/conan`; toolchain Conan не используется.
 - Профили Windows: `detect_api.detect_default_compiler()`,
   `compiler={{ compiler }}`, `compiler.version={{ version }}`,
   `compiler.runtime=dynamic`, `compiler.runtime_type` = Debug|Release,
@@ -96,21 +110,25 @@
 
 ## 4. Скрипты `automation/` (Python 3, без сторонних пакетов)
 
+Скрипты не дублируют настройки пресетов: они выбирают пресет и передают его
+`cmake --preset`, `cmake --build --preset`, `ctest --preset`.
 `common.py` — единственное место, где различаются платформы: `IS_WINDOWS`,
-`profile(configuration)`, `build_dir(configuration, root="build")`,
-`bin_dir(configuration)`, `configure(...)` (на Linux `-DCMAKE_BUILD_TYPE` и
-`-DCMAKE_EXPORT_COMPILE_COMMANDS=ON`), `ensure_generated(...)`,
-`cmake_build(...)` (`--config` только на Windows), `run(...)` с выводом
-команды и остановкой при ошибке.
+`PLATFORM` (`windows-msvc` | `linux-gcc`), `preset(variant)` для
+`debug`/`release`/`asan`, `build_dir(variant)` = `build/<пресет>`,
+`bin_dir(variant)` = `build/<пресет>/bin`, `configure`, `ensure_configured`,
+`cmake_build(variant, target=None)`, `build(variant)`, `run(...)` с выводом
+команды и остановкой при ошибке. На Windows без Developer Command Prompt
+`run` берёт окружение из `vcvars64.bat` (Visual Studio через `vswhere`) и ищет
+программу по `PATH` этого окружения.
 
 | Скрипт | Делает |
 |---|---|
-| `generate_project_files.py` | conan install для обеих конфигураций, конфигурация CMake |
-| `build_debug.py`, `build_release.py` | сборка конфигурации |
-| `run_tests.py` | сборка Debug, `ctest --output-on-failure --output-junit test-report.xml` |
-| `run_coverage.py` | Windows: OpenCppCoverage по `src/<Name>`, HTML + Cobertura, таблица, `GITHUB_STEP_SUMMARY`, `--min N`; Linux: сообщение и выход 0 |
-| `run_tidy.py` | Windows: `cmake --build build --config Debug -- /p:RunCodeAnalysis=true /p:EnableClangTidyCodeAnalysis=true /p:EnableMicrosoftCodeAnalysis=false` — свойства уходят MSBuild через CMake, `MSBuild.exe` напрямую не вызывается; Linux: `clang-tidy -p build/Debug` по всем `.cpp` из `src/` |
-| `run_asan.py` | отдельный каталог `build-asan` через `build_dir(..., root="build-asan")`, `-DENABLE_ASAN=ON`, ctest |
+| `generate_project_files.py` | `cmake --preset` для debug и release |
+| `build_debug.py`, `build_release.py` | сборка пресета (конфигурация, если каталога нет) |
+| `run_tests.py` | сборка debug, `ctest --preset <debug> --output-junit test-report.xml` |
+| `run_coverage.py` | Windows: OpenCppCoverage по `src/<Name>`, HTML + Cobertura в `build/windows-msvc-debug/coverage`, таблица, `GITHUB_STEP_SUMMARY`, `--min N`; Linux: сообщение и выход 0 |
+| `run_tidy.py` | сборка debug, затем `clang-tidy -p build/<debug-пресет>` по всем `.cpp` из `src/`; на Windows `clang-tidy.exe` из `VC/Tools/Llvm/x64/bin` Visual Studio, если его нет в PATH |
+| `run_asan.py` | `cmake --workflow --preset <платформа>-asan` |
 | `format_files.py` | цель `format`; `--check` — `format-check` |
 | `build_docs.py` | `doxygen Doxyfile`, затем `mkdocs build --strict`; `--serve` |
 | `clean.py` | `git clean -Xdn` / `-Xdf`; `--dry-run` |
@@ -189,13 +207,13 @@ GCC/Clang: `-fsanitize=address,undefined -fno-sanitize-recover=all
    (C++23, CMake, Conan 2, MSVC / GCC, `automation/`).
 3. **`## Системные требования`**
    - `### Windows` — VS 2022, CMake 3.25+, Python 3, Conan 2, Doxygen /
-     `requirements-docs.txt`; путь к бинарникам `build/bin/<Config>/`.
-   - `### Linux` — для Ubuntu 24.04: `g++-14`, cmake, make, clang-tidy,
-     clang-format, pipx/conan; путь к бинарникам `build/<Config>/bin/`.
+     `requirements-docs.txt`; путь к бинарникам `build/<пресет>/bin/`.
+   - `### Linux` — для Ubuntu 24.04: `g++-14`, cmake, ninja-build, clang-tidy,
+     clang-format, pipx/conan; путь к бинарникам `build/<пресет>/bin/`.
 4. **`## Сборка и запуск`** — из корня проекта:
    `generate_project_files.py`, `build_debug.py`, запуск
-   `build/bin/Debug/<Name>.exe` (Windows); отдельно упомянуть
-   `build_release.py` и `clean.py`.
+   `build/windows-msvc-debug/bin/<Name>.exe` (Windows); отдельно упомянуть
+   `build_release.py`, `clean.py`, `cmake --workflow --preset` и открытие в IDE.
 5. **`## Тестирование`** — `run_tests.py`, `run_coverage.py` (в т.ч. `--min 70`
    в CI), `run_asan.py`.
 6. **`## Контроль качества кода`** — `format_files.py --check`, `run_tidy.py`;
@@ -225,7 +243,7 @@ README хотя бы один раз.
 - `concurrency.group`: `${{ github.workflow }}-${{ github.ref }}`;
   `cancel-in-progress: true` (у `docs.yml` — `false`);
 - раннеры: `windows-latest` и при необходимости `ubuntu-latest`;
-- Linux-джобы: установить `g++-14`, через `update-alternatives` сделать
+- Linux-джобы: установить `g++-14` и `ninja-build`, через `update-alternatives` сделать
   системными `gcc`/`g++`, Conan через `pipx install conan`; на Windows —
   `pip install conan`;
 - кэш Conan: `actions/cache@v6`, путь `~/.conan2/p`, ключ
@@ -242,14 +260,16 @@ README хотя бы один раз.
    - Windows, матрица Debug/Release → имена работ `build-Debug`,
      `build-Release`; скрипты `generate_project_files.py`,
      `build_debug.py` / `build_release.py`; артефакты `app-Debug`,
-     `app-Release` (`build/bin/<Config>/<Name>.exe` + `config.json`).
+     `app-Release`; в матрице поле `preset`, артефакт —
+     `build/${{ matrix.preset }}/bin/<Name>.exe` и `config.json` оттуда же.
    - Linux, матрица Debug/Release → имена `linux-Debug`, `linux-Release`;
      те же скрипты через `python3`; артефакты `app-linux-Debug`,
-     `app-linux-Release` (`build/<Config>/bin/<Name>` + `config.json`).
+     `app-linux-Release` (`build/${{ matrix.preset }}/bin/<Name>` + `config.json`).
 2. **`tests.yml`**
    - Windows, работа `tests`: `run_asan.py`, `run_tests.py`,
-     `run_coverage.py --min 70`; артефакты `coverage-report`,
-     `test-report`; публикация JUnit через `test-reporting@v10`.
+     `run_coverage.py --min 70`; артефакты `coverage-report`
+     (`build/windows-msvc-debug/coverage/html`), `test-report`
+     (`build/windows-msvc-debug/test-report.xml`); публикация JUnit через `test-reporting@v10`.
    - Linux, работа `linux-tests`: `run_asan.py`, `run_tests.py`.
 3. **`code-quality.yml`**
    - Windows, работа `code-quality`: `format_files.py --check`,
@@ -291,3 +311,9 @@ python <курс>/checks/scaffold.py <каталог проекта> --report re
    `AppTestRunner.exe`. В **сгенерированном** каркасе пути и имя раннера
    строить от `<Name>` (`src/<Name>`, `<Name>TestRunner.exe`), не копировать
    строку `App` из эталона.
+3. **Пресеты вместо раскладки курса.** Каркас собирается через
+   `CMakePresets.json` и Ninja в `build/<пресет>/`. Проверки спринтов курса
+   07, 11, 13 и 14 ищут прежнюю раскладку (`build/bin/Debug`, `build-asan/`,
+   MSBuild-анализ в `run_tidy.py`, `build_dir(..., root="build-asan")`) и на
+   таком каркасе не проходят; критерий приёмки из раздела 11 требует их
+   обновления.

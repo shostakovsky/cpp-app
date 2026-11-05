@@ -1,17 +1,13 @@
 """Build the project with AddressSanitizer and run the tests under it.
 
-The instrumented build lives in its own directory (build-asan) so the regular
-build stays fast and unchanged. It reuses the Conan toolchain from the regular
-build tree.
+The asan preset (ENABLE_ASAN=ON) has its own build tree, build/<platform>-asan,
+so the regular build stays fast and unchanged. Its workflow preset configures,
+builds and tests in one command.
 
 Usage:
     python automation/run_asan.py
 """
 
-from common import build_dir, cmake_build, configure, ensure_generated, relative, run
+from common import preset, run
 
-ensure_generated("Debug")
-tree = build_dir("Debug", root="build-asan")
-configure("Debug", tree, extra=["-DENABLE_ASAN=ON"])
-cmake_build(tree, "Debug")
-run(["ctest", "--test-dir", relative(tree), "-C", "Debug", "--output-on-failure"])
+run(["cmake", "--workflow", "--preset", preset("asan")])

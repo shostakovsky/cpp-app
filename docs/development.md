@@ -5,26 +5,38 @@
 (`python` / `python3`). Общие пути и вызов subprocess собраны в
 `automation/common.py`: скрипты можно вызывать из любого текущего каталога.
 
-Раскладка сборочных деревьев различается из‑за генераторов CMake:
+Единственный источник настроек сборки — `CMakePresets.json`. Скрипты, CI и
+IDE используют одни и те же пресеты `<платформа>-<вариант>`; у каждого свой
+каталог `build/<пресет>/`, бинарники — в `build/<пресет>/bin/`. Генератор
+везде Ninja, одна конфигурация на каталог:
 
-| Платформа | Каталог конфигурации | Бинарники |
-| --- | --- | --- |
-| Windows (MSVC, multi-config) | `build/` | `build/bin/<Config>/` |
-| Linux (GCC, single-config) | `build/<Config>/` | `build/<Config>/bin/` |
+| Пресет | Назначение |
+| --- | --- |
+| `windows-msvc-debug`, `linux-gcc-debug` | Debug: сборка, тесты, анализ |
+| `windows-msvc-release`, `linux-gcc-release` | Release |
+| `windows-msvc-asan`, `linux-gcc-asan` | Debug с ASan (на Linux ещё UBSan) |
+
+Для каждого пресета есть workflow-пресет с тем же именем:
+`cmake --workflow --preset linux-gcc-debug` конфигурирует, собирает и
+запускает тесты одной командой.
+
+Ninja на Windows нужно окружение MSVC (`cl.exe`, Windows SDK). Если скрипт
+запущен не из Developer Command Prompt, `common.py` находит Visual Studio
+через `vswhere` и подгружает окружение из `vcvars64.bat`.
 
 ## Скрипты `automation/`
 
 | Скрипт | Назначение |
 | --- | --- |
-| `generate_project_files.py` | Conan install + генерация CMake (Debug/Release) |
+| `generate_project_files.py` | Конфигурация пресетов Debug и Release (Conan — внутри) |
 | `build_debug.py` | Сборка конфигурации Debug |
 | `build_release.py` | Сборка конфигурации Release |
 | `clean.py` | Удаление сборочных каталогов (`--dry-run` — только список) |
 | `format_files.py` | Форматирование; `--check` — только проверка стиля |
-| `run_tests.py` | Debug + CTest; JUnit в `build/test-report.xml` |
+| `run_tests.py` | Debug + CTest; JUnit в `build/<пресет>/test-report.xml` |
 | `run_coverage.py` | Покрытие OpenCppCoverage; опционально `--min N` |
-| `run_asan.py` | Сборка в `build-asan/` с ASan и прогон тестов |
-| `run_tidy.py` | Статический анализ clang-tidy |
+| `run_asan.py` | Workflow-пресет `*-asan`: сборка с ASan и прогон тестов |
+| `run_tidy.py` | clang-tidy по `compile_commands.json` (обе платформы) |
 | `build_docs.py` | Документация проекта. Doxygen + MkDocs |
 
 Конфигурации стиля: `.clang-format`, `.clang-tidy`. Профили Conan:
@@ -33,18 +45,20 @@
 ## Работа в IDE
 
 Visual Studio, CLion и VS Code открывают проект как CMake-папку по
-`CMakePresets.json`, без предварительного запуска скриптов:
+`CMakePresets.json`, без предварительного запуска скриптов, и собирают в те же
+каталоги `build/<пресет>/`, что и скрипты:
 
 - Visual Studio: File → Open → Folder, конфигурация `windows-msvc-debug`;
 - CLion: Settings → Build, Execution, Deployment → CMake, включить пресеты `linux-gcc-*`.
+
+`config.json` копируется в `build/<пресет>/bin/` рядом с `App`, поэтому
+приложение запускается и отлаживается из IDE без настройки рабочего каталога.
 
 Пресет подключает `cmake/conan_provider.cmake` (dependency provider из
 [cmake-conan](https://github.com/conan-io/cmake-conan)): на первом
 `find_package()` CMake сам вызывает `conan install` с профилем из `profiles/`
 и ставит зависимости в `build/<пресет>/conan`. Удаление каталога сборки
 («Delete Cache» в Visual Studio) безопасно: следующий configure восстановит всё сам.
-
-Скрипты `automation/` и CI пресеты не используют и работают как раньше.
 
 `conan_provider.cmake` скопирован без изменений с коммита
 [`dff3768`](https://github.com/conan-io/cmake-conan/blob/dff3768b8756f8982be4bf987da72ed5bf4b9981/conan_provider.cmake)

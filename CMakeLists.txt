@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.25)
 project(CppCourse LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(nlohmann_json REQUIRED)
 find_package(GTest REQUIRED)
@@ -16,5 +17,4 @@ include(cmake/CompilerWarnings.cmake)
 include(cmake/Sanitizers.cmake)
 
 add_subdirectory(src/App)
-set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT App)
 include(cmake/ClangFormat.cmake)

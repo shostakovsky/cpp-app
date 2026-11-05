@@ -1,36 +1,33 @@
 """Run clang-tidy over the project.
 
-On Windows, Visual Studio runs clang-tidy through MSBuild code analysis and
-passes each file's real compile flags, so no compile_commands.json is needed.
-On Linux, clang-tidy reads the compilation database produced by CMake
-(-DCMAKE_EXPORT_COMPILE_COMMANDS=ON). Findings are errors (see .clang-tidy:
-WarningsAsErrors), so a finding fails the script.
+clang-tidy takes each file's real compile flags from the compilation database
+(compile_commands.json) that every preset exports, so Windows and Linux run
+the same command. On Windows clang-tidy ships with Visual Studio (component
+"C++ Clang tools for Windows") and is usually not on PATH. Findings are errors
+(see .clang-tidy: WarningsAsErrors), so a finding fails the script.
 
 Usage:
     python automation/run_tidy.py
 """
 
-from common import (
-    IS_WINDOWS,
-    PROJECT_ROOT,
-    build_dir,
-    cmake_build,
-    ensure_generated,
-    relative,
-    run,
-)
+import shutil
+from pathlib import Path
 
-ensure_generated("Debug")
+from common import IS_WINDOWS, PROJECT_ROOT, build, build_dir, environment, fail, relative, run
 
-if IS_WINDOWS:
-    run([
-        "cmake", "--build", relative(build_dir("Debug")), "--config", "Debug",
-        "--",
-        "/p:RunCodeAnalysis=true",
-        "/p:EnableClangTidyCodeAnalysis=true",
-        "/p:EnableMicrosoftCodeAnalysis=false",
-    ])
-else:
-    cmake_build(build_dir("Debug"), "Debug")  # generated headers and the database must exist
-    sources = sorted((PROJECT_ROOT / "src").rglob("*.cpp"))
-    run(["clang-tidy", "-p", relative(build_dir("Debug")), *(relative(s) for s in sources)])
+
+def clang_tidy() -> str:
+    found = shutil.which("clang-tidy", path=environment().get("PATH"))
+    if found:
+        return found
+    if IS_WINDOWS:
+        bundled = Path(environment()["VSINSTALLDIR"], "VC", "Tools", "Llvm", "x64", "bin", "clang-tidy.exe")
+        if bundled.is_file():
+            return str(bundled)
+    fail("clang-tidy not found: install 'C++ Clang tools for Windows' in Visual Studio Installer "
+         "or the clang-tidy package on Linux")
+
+
+build("debug")  # keeps compile_commands.json in step with the CMake files
+sources = sorted((PROJECT_ROOT / "src").rglob("*.cpp"))
+run([clang_tidy(), "-p", relative(build_dir("debug")), *(relative(s) for s in sources)])
