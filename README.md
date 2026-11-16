@@ -125,3 +125,13 @@ project/
 ```
 
 Пример: `/new-cpp-project Sandbox ../sandbox`. Канонический файл скилла — `.claude/skills/new-cpp-project/SKILL.md` (адаптер Antigravity — `.agents/skills.json`).
+
+## Работа с AI-агентом
+
+Правила репозитория описаны в [AGENTS.md](AGENTS.md).
+
+Изменения проверяются скиллом `/code-review` ([.claude/skills/code-review/SKILL.md](.claude/skills/code-review/SKILL.md)).
+
+Коммит оформляется скиллом `/smart-commit` ([.claude/skills/smart-commit/SKILL.md](.claude/skills/smart-commit/SKILL.md)).
+
+В `master` изменения доставляются через Pull Request скиллом `/create-pr` ([.claude/skills/create-pr/SKILL.md](.claude/skills/create-pr/SKILL.md)).
