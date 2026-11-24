@@ -1,6 +1,6 @@
 """Measure test coverage with OpenCppCoverage.
 
-Builds Debug, runs AppTestRunner under OpenCppCoverage and writes:
+Builds Debug, runs all tests via ctest under OpenCppCoverage and writes:
     build/coverage/html/index.html   -- report for humans
     build/coverage/coverage.xml      -- Cobertura XML for CI
 Prints a per-file table; on GitHub Actions appends it to the job summary.
@@ -16,12 +16,11 @@ import sys
 import xml.etree.ElementTree as ElementTree
 from pathlib import Path
 
-from common import IS_WINDOWS, PROJECT_ROOT, bin_dir, build, build_dir, run
+from common import IS_WINDOWS, PROJECT_ROOT, build, build_dir, run
 
 KNOWN_PATHS = [Path(r"C:\Program Files\OpenCppCoverage\OpenCppCoverage.exe")]
 COVERAGE_DIR = build_dir("Debug") / "coverage"
 REPORT_XML = COVERAGE_DIR / "coverage.xml"
-TEST_RUNNER = bin_dir("Debug") / "AppTestRunner.exe"
 
 
 def find_tool() -> str:
@@ -64,11 +63,12 @@ def main() -> None:
     COVERAGE_DIR.mkdir(parents=True, exist_ok=True)
     run([
         tool, "--quiet",
-        "--sources", str(PROJECT_ROOT / "src" / "App"),
+        "--cover_children",
+        "--sources", str(PROJECT_ROOT / "src"),
         "--excluded_sources", "*\\Tests\\*",
         "--export_type", f"html:{COVERAGE_DIR / 'html'}",
         "--export_type", f"cobertura:{REPORT_XML}",
-        "--", str(TEST_RUNNER),
+        "--", "ctest", "--test-dir", str(build_dir("Debug")), "-C", "Debug", "--output-on-failure",
     ])
 
     total, rows = coverage_table()
