@@ -20,9 +20,9 @@ const nlohmann::json& require(const nlohmann::json& object, std::string_view key
 }
 }  // namespace
 
-AppConfig parseConfig(std::istream& input)
+GameConfig parseConfig(std::istream& input)
 {
-    AppConfig config;
+    GameConfig config;
 
     nlohmann::json json;
     try
