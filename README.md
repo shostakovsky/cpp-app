@@ -5,7 +5,7 @@
 [![code-quality](https://github.com/shostakovsky/cpp-app/actions/workflows/code-quality.yml/badge.svg)](https://github.com/shostakovsky/cpp-app/actions/workflows/code-quality.yml)
 [![docs](https://github.com/shostakovsky/cpp-app/actions/workflows/docs.yml/badge.svg)](https://github.com/shostakovsky/cpp-app/actions/workflows/docs.yml)
 
-Консольное приложение App читает параметры окна из `config.json` и выводит их в терминал. Учебный проект курса по инженерному C++: на нём отрабатываются сборка, тесты, качество кода и CI. Стек — C++23, CMake, Conan 2, MSVC (Visual Studio 2022), Python-скрипты в `automation/`.
+Учебный проект курса по инженерному C++ включает общую библиотеку `Common`, тонкое консольное приложение `App` для чтения параметров окна и игру из слоёв `GameCore`, `GamePresentation` и `GameApp`. На проекте отрабатываются сборка, тесты, качество кода и CI. Стек — C++23, CMake, Conan 2, MSVC (Visual Studio 2022), Python-скрипты в `automation/`.
 
 ## Системные требования
 
@@ -43,6 +43,9 @@ python automation/build_debug.py
 ```
 
 Конфигурация Release: `python automation/build_release.py`. Полная очистка сборочных каталогов: `python automation/clean.py`.
+
+`App` читает `config.json` из текущего рабочего каталога. Пример конфигурации
+находится в корне проекта, который также задан рабочим каталогом отладчика.
 
 ## Тестирование
 
@@ -90,17 +93,21 @@ python automation/build_docs.py --serve
 
 ```text
 project/
-├── src/App/           # исходники: AppLib, App, тесты
+├── src/Common/        # библиотека Common и тесты CommonTests
+├── src/App/           # тонкое консольное приложение App
+├── src/Game/          # слои GameCore, GamePresentation, GameApp и GameTests
 ├── automation/        # скрипты генерации, сборки, тестов и проверок
 ├── profiles/          # профили Conan (Debug / Release)
 ├── cmake/             # общие модули CMake (warnings, sanitizers, format)
 ├── .github/workflows/ # GitHub Actions (build, tests, code-quality, docs)
 ├── CMakeLists.txt
 ├── conanfile.txt
-└── config.json        # конфигурация приложения (рабочий каталог запуска)
+└── config.json        # конфигурация App
 ```
 
-- `src/` — библиотека `AppLib`, исполняемый файл `App` и юнит-тесты.
+- `src/Common/` — общая статическая библиотека `Common` и тесты `CommonTests`.
+- `src/App/` — тонкая точка входа для чтения конфигурации.
+- `src/Game/` — игровая логика, представление, приложение и тесты игровой логики.
 - `automation/` — единая точка входа для локальной сборки и тех же шагов в CI.
 - `profiles/` — профили Conan для Windows/MSVC и Linux/GCC 14.
 - `.github/` — четыре независимых workflow GitHub Actions (Windows + Linux).

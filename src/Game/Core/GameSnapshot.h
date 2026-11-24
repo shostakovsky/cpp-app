@@ -11,6 +11,6 @@ struct GameSnapshot
     GameState state{GameState::Playing};
 
     /// Total elapsed game time.
-    float totalTime{0.0f};
+    double totalTime{0.0};
 };
 }  // namespace LifeExe::Core

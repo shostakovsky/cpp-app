@@ -3,6 +3,7 @@ add_library(GameCore STATIC
 	Core/GameSnapshot.h
 	Core/Game.h
 	Core/Game.cpp
+	Core/Command.h
 )
 target_include_directories(GameCore PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/Core
@@ -19,8 +20,9 @@ target_include_directories(GamePresentation PUBLIC
 
 add_executable(GameApp
 	App/main.cpp
+	App/Timer.h
 )
-target_link_libraries(GameApp PRIVATE GamePresentation GameCore)
+target_link_libraries(GameApp PRIVATE GamePresentation GameCore Common)
 set_property(TARGET GameApp PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
 
 add_executable(GameTests

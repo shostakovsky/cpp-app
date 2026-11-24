@@ -12,7 +12,7 @@ TEST(ConfigTest, ShouldReadTitleAndWindow)
 {
     std::istringstream input{R"({"title": "App", "window": {"width": 800, "height": 600}})"};
 
-    const AppConfig config = parseConfig(input);
+    const GameConfig config{parseConfig(input)};
 
     EXPECT_EQ(config.title, "App");
     EXPECT_EQ(config.width, 800);

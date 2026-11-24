@@ -18,7 +18,7 @@ int main()
             return EXIT_FAILURE;
         }
 
-        const LifeExe::AppConfig config{LifeExe::parseConfig(file)};
+        const LifeExe::GameConfig config{LifeExe::parseConfig(file)};
         std::println("Hello, {}! Window: {}x{}", config.title, config.width, config.height);
     }
     catch (const std::exception& e)
